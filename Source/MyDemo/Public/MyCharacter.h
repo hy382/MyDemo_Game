@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"  //因为用到了FInputActionValue
 #include "GameFramework/Character.h"
 #include "MyCharacter.generated.h"
 //向前声明可以提高编译效率
 class USpringArmComponent;
 class UCameraComponent;
+
+class UInputMappingContext;
+class UInputAction;
 
 
 
@@ -31,10 +35,23 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Component")
-	TObjectPtr<USpringArmComponent> SpringArm;
+	TObjectPtr<USpringArmComponent> SpringArm;  //弹簧臂声明
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component")
-	TObjectPtr<UCameraComponent> CameraComponent;
+	TObjectPtr<UCameraComponent> CameraComponent;  //摄像机声明
 
-
+	//增强输入声明,暴露给蓝图
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Input")
+	TObjectPtr<class UInputMappingContext>DefaultMappingContext;  //输入映射上下文
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction>MoveAction;  //上下左右移动
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction>LookAction;  //上下左右转动视角
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction>ZoomAction;  //缩放视角
+	//增强输入的函数声明
+	void Move(const FInputActionValue& Value);  
+	void Look(const FInputActionValue& Value);
+	void Zoom(const FInputActionValue& Value);
 };
