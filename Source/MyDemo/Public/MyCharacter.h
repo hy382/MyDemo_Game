@@ -50,8 +50,16 @@ public:
 	TObjectPtr<class UInputAction>LookAction;  //上下左右转动视角
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction>ZoomAction;  //缩放视角
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction>JumpAction;  //跳跃
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction>AttackAction;  //射线检测（攻击）
+
 	//增强输入的函数声明
-	void Move(const FInputActionValue& Value);  
-	void Look(const FInputActionValue& Value);
-	void Zoom(const FInputActionValue& Value);
+	void Move(const FInputActionValue& Value);  //移动
+	void Look(const FInputActionValue& Value);  //视角
+	void Zoom(const FInputActionValue& Value);  //视角缩放
+	void StartJump();  //开始跳跃
+	void StopJump();  //结束跳跃
+	void Attack();  //攻击
 };

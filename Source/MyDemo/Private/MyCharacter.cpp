@@ -13,6 +13,9 @@
 #include "InputAction.h"  //用于UInputAction的真实定义
 #include "Engine/LocalPlayer.h"  //获取本地玩家
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
+#include "Engine/Engine.h"  //打印屏幕文字
+#include "DrawDebugHelpers.h"  //使用DrawDebugline画线
+#include "Engine/World.h"  //使用GetWorld()
 
 
 // Sets default values
@@ -64,6 +67,11 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMyCharacter::Move);
 		EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMyCharacter::Look);
 		EnhancedInput->BindAction(ZoomAction, ETriggerEvent::Triggered, this, &AMyCharacter::Zoom);
+		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &AMyCharacter::StartJump);
+		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMyCharacter::StopJump);
+		EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AMyCharacter::Attack);
+
+
 }
 }
 
@@ -96,6 +104,34 @@ void AMyCharacter::Zoom(const FInputActionValue& Value)
 	if (ZoomValue != 0 && SpringArm != nullptr) {
 		float NewLength = SpringArm->TargetArmLength - (ZoomValue * 50.0f);  //计算弹簧臂长度
 		SpringArm->TargetArmLength = FMath::Clamp(NewLength, 100.0f, 800.0f);  //FMath::Clamp(我要检查的值，最小值，最大值）;
+	}
+}
+
+void AMyCharacter::StartJump()
+{
+	Jump();  //开始跳跃
+}
+
+void AMyCharacter::StopJump()
+{
+	StopJumping();  //结束跳跃
+}
+
+void AMyCharacter::Attack()  //射线检测
+{
+	FVector Start = GetActorLocation()+FVector(0,0,50);  //获取起点的位置
+	FVector Forward = GetActorForwardVector();  //获取方向
+	FVector End = Start + (Forward * 1000.0f);  //计算终点位置
+	FHitResult HitResult;  //命中结果
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);  //忽略自己
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);  //发射射线
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 10.0f, 0, 10.0f);
+	if (bHit) {
+		FString HitName = HitResult.GetActor()->GetName();
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("射线击中 %s") ,*HitName));
 	}
 }
 
