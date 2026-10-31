@@ -11,11 +11,13 @@
 #include "EnhancedInputComponent.h"  //用于	BindAction
 #include "EnhancedInputSubsystems.h"  //用于Subsystem->AddMappingContext
 #include "InputAction.h"  //用于UInputAction的真实定义
+
 #include "Engine/LocalPlayer.h"  //获取本地玩家
 #include "GameFramework/CharacterMovementComponent.h"  //角色移动组件
 #include "Engine/Engine.h"  //打印屏幕文字
 #include "DrawDebugHelpers.h"  //使用DrawDebugline画线
 #include "Engine/World.h"  //使用GetWorld()
+#include <Kismet/GameplayStatics.h> 
 
 
 // Sets default values
@@ -130,8 +132,10 @@ void AMyCharacter::Attack()  //射线检测
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams);  //发射射线
 	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 10.0f, 0, 10.0f);
 	if (bHit) {
-		FString HitName = HitResult.GetActor()->GetName();
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("射线击中 %s") ,*HitName));
+		AActor* HitActor = HitResult.GetActor();  //获取被攻击的角色
+		if (HitActor) {
+			UGameplayStatics::ApplyDamage(HitActor, 20.0f, GetController(), this, UDamageType::StaticClass());  //动用攻击逻辑
+		}
 	}
 }
 
