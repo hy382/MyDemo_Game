@@ -52,6 +52,7 @@ void AMyCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);  //向子系统输入映射，告诉引擎现在按哪套规则读取玩家案件
 		};
 	}
+	CurrentHealth = MaxHealth;  //开局当前血量等于最大血量
 }
 
 // Called every frame
@@ -123,7 +124,7 @@ void AMyCharacter::Attack()  //射线检测
 {
 	FVector Start = GetActorLocation()+FVector(0,0,50);  //获取起点的位置
 	FVector Forward = GetActorForwardVector();  //获取方向
-	FVector End = Start + (Forward * 1000.0f);  //计算终点位置
+	FVector End = Start + (Forward * AttackRadius);  //计算终点位置
 	FHitResult HitResult;  //命中结果
 
 	FCollisionQueryParams QueryParams;
@@ -134,9 +135,26 @@ void AMyCharacter::Attack()  //射线检测
 	if (bHit) {
 		AActor* HitActor = HitResult.GetActor();  //获取被攻击的角色
 		if (HitActor) {
-			UGameplayStatics::ApplyDamage(HitActor, 20.0f, GetController(), this, UDamageType::StaticClass());  //动用攻击逻辑
+			UGameplayStatics::ApplyDamage(HitActor, AttackDamage, GetController(), this, UDamageType::StaticClass());  //动用攻击逻辑
 		}
 	}
+}
+
+//受到攻击
+float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("beijizhong"));
+	if (CurrentHealth <= 0) { return 0; }  //血量为零时不执行后面的程序，防止死亡后继续被攻击导致崩溃
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	CurrentHealth -= DamageAmount;  //获取当前血量
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("角色收到 %.1f 点伤害，剩余血量 %.1f"), DamageAmount, CurrentHealth));
+
+	if (CurrentHealth <= 0.0f) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("角色死亡"));
+		PrimaryActorTick.bCanEverTick = false;  //关闭tick，防止死后还在追玩家
+		Destroy();  //销毁
+	}
+	return DamageAmount;
 }
 
 

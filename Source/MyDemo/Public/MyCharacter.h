@@ -54,6 +54,15 @@ public:
 	TObjectPtr<class UInputAction>JumpAction;  //跳跃
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction>AttackAction;  //射线检测（攻击）
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float AttackDamage = 20.0f;  //攻击伤害
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	float AttackRadius = 1000.0f;  //攻击距离
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth = 100.0f;  //最大血量
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
+	float CurrentHealth;  //当前血量
 
 	//增强输入的函数声明
 	void Move(const FInputActionValue& Value);  //移动
@@ -62,4 +71,7 @@ public:
 	void StartJump();  //开始跳跃
 	void StopJump();  //结束跳跃
 	void Attack();  //攻击
+
+	//重写扣血逻辑的父类
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
 };

@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "MyBossCharacter.generated.h"
 
+class character;
+
 UCLASS()
 class MYDEMO_API AMyBossCharacter : public ACharacter
 {
@@ -32,6 +34,16 @@ public:
 	float MaxHealth = 100;  //×î´óÑªÁ¿
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss")
 	float CurrentHealth;  //µ±Ç°ÑªÁ¿
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
+	float AttackRadius = 500.0f;  //¹¥»÷¾àÀë
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
+	float AttackDamage = 15.0f;  //¹¥»÷ÉËº¦
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
+	float AttackInterval = 1.5f;  //¹¥»÷¼ä¸ô
+
+	void Attack();  //¹¥»÷
+	float AttackCooldownTimer = 0.0f;  //ÀäÈ´¼ÆÊ±Æ÷
+
 	//ÖØÐ´¿ÛÑªÂß¼­µÄ¸¸Àà
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
 
