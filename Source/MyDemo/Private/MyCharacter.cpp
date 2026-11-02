@@ -60,6 +60,10 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (DodgeTimer > 0.0f) {
+		DodgeTimer -= DeltaTime;  //如果闪避的冷却时间大于零就继续冷却
+	}
+
 }
 
 // Called to bind functionality to input
@@ -73,6 +77,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &AMyCharacter::StartJump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMyCharacter::StopJump);
 		EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AMyCharacter::Attack);
+		EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Started, this, &AMyCharacter::StartDodge);
 
 
 }
@@ -138,6 +143,34 @@ void AMyCharacter::Attack()  //射线检测
 			UGameplayStatics::ApplyDamage(HitActor, AttackDamage, GetController(), this, UDamageType::StaticClass());  //动用攻击逻辑
 		}
 	}
+}
+
+void AMyCharacter::StartDodge()  //闪避
+{
+	if (DodgeTimer > 0.0f) { return; }  //如果冷却大于零不执行下面的程序
+	
+
+	FVector DodgeDir = GetLastMovementInputVector();  //获取最后一次输入的朝向
+
+	if (DodgeDir.IsNearlyZero()) {  //如果玩家没有输入方向
+		DodgeDir = -GetActorForwardVector();  //默认向后
+	}
+
+	DodgeDir.Z = 0.0f;  //Z轴清零
+	DodgeDir.Normalize();  //把方向转化为单位向量
+
+	LaunchCharacter(DodgeDir * DodgeStrength, true, false);  //施加冲量, 参数(方向*力度，是否覆盖XY速度，书否覆盖Z速度)
+
+	bIsInvincible = true;  //开启无敌
+
+	GetWorldTimerManager().SetTimer(DodgeInvincibleTimerHandle, this, &AMyCharacter::EndDogeInvincibility, InvincibleDuration, false);  //闹钟定时
+
+	DodgeTimer = DodgeCooldown;  //重置冷却
+}
+
+void AMyCharacter::EndDogeInvincibility()
+{ 
+	bIsInvincible = false;  //关闭无敌
 }
 
 //受到攻击
