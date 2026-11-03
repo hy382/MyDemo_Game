@@ -83,6 +83,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 }
 }
 
+//移动
 void AMyCharacter::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();  //拿出二维向量
@@ -96,6 +97,7 @@ void AMyCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
+//视角移动
 void AMyCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();  //拿出二维向量
@@ -106,6 +108,7 @@ void AMyCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+//视角缩放
 void AMyCharacter::Zoom(const FInputActionValue& Value)
 {
 	float ZoomValue = Value.Get<float>();  //拿出浮点型的数

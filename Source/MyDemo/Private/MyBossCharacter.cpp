@@ -40,11 +40,27 @@ void AMyBossCharacter::Tick(float DeltaTime)
 	FVector Direction = PlayerLocation - BossLocation;  //获取朝向，为了让boss朝向玩家
 	Direction.Z = 0.0f;  //把Z轴清零防止boos飞起来
 	float Distance = Direction.Size();  //计算BOSS和玩家之间的距离
-	if (Distance<=800.0f && Distance > 150.0f) {
-		Direction.Normalize();  //把方向变为单位向量，防止速度因为距离变得忽快忽慢
-		AddMovementInput(Direction, 1.0f);  //朝着Direction的方向以1.0的缩放力度移动
-		SetActorRotation(Direction.Rotation());  //让BOSS面向玩家
+
+	if(Distance<=MeleeRadius)
+
+	switch (CurrentState) {  //BOSS状态机
+	case EBossState::Idle:
+		//什么都不做
+		if (Distance <= ChaseRadius) { CurrentState = EBossState::Chasing; } //如果进入追击范围就切换到追击逻辑
+		break;
+	case EBossState::Chasing:
+		ChasePlayer(Direction);  //调用追击玩家的函数
+		if (Direction <= StrafeRadius) { CurrentState = EBossState::Strafing; }  
+		break;
+	case EBossState::Strafing:
+		//调用周旋的函数，还没写，后面再写
+		if (Direction <= MeleeRadius) { CurrentState = EBossState::Attacking; }
+		break;
+
 	}
+	
+
+
 	if (AttackCooldownTimer > 0.0f) {  //冷却倒计时
 		AttackCooldownTimer -= DeltaTime;
 	}
@@ -63,12 +79,12 @@ void AMyBossCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-//攻击
-void AMyBossCharacter::Attack()
+//近战攻击
+void AMyBossCharacter::MeleeAttack()
 {
 	FVector Start = GetActorLocation()+FVector(0,0,5);  //获取自己的当前位置
 	FVector Forward = GetActorForwardVector();  //获取自己的朝向
-	FVector End = Start + (Forward * AttackRadius);  //获取射线的长度
+	FVector End = Start + (Forward * MeleeAttackRadius);  //获取射线的长度
 
 	FHitResult HitResult;  //获取命中结果
 
@@ -81,11 +97,91 @@ void AMyBossCharacter::Attack()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT(" %s"), *HitActor->GetName()));
 		AMyCharacter* PlayerHit = Cast<AMyCharacter>(HitActor);  //检查被击中的角色是不是玩家=
 		if (PlayerHit) {
-			UGameplayStatics::ApplyDamage(PlayerHit, AttackDamage, GetController(), this, UDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(PlayerHit, MeleeAttackDamage, GetController(), this, UDamageType::StaticClass());
 			
 		}
 	}
 }
+
+//中距离攻击
+void AMyBossCharacter::MidAttack()
+{
+	FVector Start = GetActorLocation() + FVector(0, 0, 5);  //获取自己的当前位置
+	FVector Forward = GetActorForwardVector();  //获取自己的朝向
+	FVector End = Start + (Forward * MidAttackRadius);  //获取射线的长度
+
+	FHitResult HitResult;  //获取命中结果
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);  //忽略自己
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Pawn, QueryParams);  //发射射线
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 10.0f, 0, 10.0f);
+	if (bHit) {
+		AActor* HitActor = HitResult.GetActor();  //获取被攻击的角色
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT(" %s"), *HitActor->GetName()));
+		AMyCharacter* PlayerHit = Cast<AMyCharacter>(HitActor);  //检查被击中的角色是不是玩家=
+		if (PlayerHit) {
+			UGameplayStatics::ApplyDamage(PlayerHit, MidAttackDamage, GetController(), this, UDamageType::StaticClass());
+
+		}
+	}
+}
+
+//远程攻击
+void AMyBossCharacter::RangedAttack()
+{
+	FVector Start = GetActorLocation() + FVector(0, 0, 5);  //获取自己的当前位置
+	FVector Forward = GetActorForwardVector();  //获取自己的朝向
+	FVector End = Start + (Forward * RangedAttackRadius);  //获取射线的长度
+
+	FHitResult HitResult;  //获取命中结果
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);  //忽略自己
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Pawn, QueryParams);  //发射射线
+	DrawDebugLine(GetWorld(), Start, End, FColor::Purple, false, 10.0f, 0, 10.0f);
+	if (bHit) {
+		AActor* HitActor = HitResult.GetActor();  //获取被攻击的角色
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT(" %s"), *HitActor->GetName()));
+		AMyCharacter* PlayerHit = Cast<AMyCharacter>(HitActor);  //检查被击中的角色是不是玩家=
+		if (PlayerHit) {
+			UGameplayStatics::ApplyDamage(PlayerHit, RangedAttackDamage, GetController(), this, UDamageType::StaticClass());
+
+		}
+	}
+}
+
+//追击玩家
+void AMyBossCharacter::ChasePlayer(FVector Direction)
+{
+	Direction.Normalize();  //方向转化为单位向量
+	AddMovementInput(Direction, 1.0f);  //添加移动
+	SetActorRotation(Direction.Rotation());  //朝着这个方向（玩家方向）
+
+}
+
+
+//与玩家周旋
+void AMyBossCharacter::StrafeAroundPlayer(FVector Direction, float DeltaTime)
+{
+	if (Direction.Size() > StrafeMaxRadius || Direction.Size() < StrafeMinRadius) { return; }  //保险
+
+	StrafeSwitchTimer -= DeltaTime;  //减少计时
+	if (StrafeSwitchTimer <= 0.0f) {  //小于等于0时执行
+		StrafeDirection *= -1.0f;  //方向相反
+		StrafeSwitchTimer = StrafeSwitchInterval;  //重置时间
+	}
+
+	    Direction.Normalize();  //方向转化为单位向量
+		FVector StrafeVec = FVector::CrossProduct(Direction, FVector::UpVector);  //叉乘
+
+		float SpeedRation = StrafeSpeed / GetCharacterMovement()->MaxWalkSpeed;  //计算标量
+
+		AddMovementInput(StrafeVec, StrafeDirection * SpeedRation);  //向量乘以标量
+	
+}
+
+
 
 //受到攻击
 float AMyBossCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
