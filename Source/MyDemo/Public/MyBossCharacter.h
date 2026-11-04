@@ -15,8 +15,8 @@ enum class EBossState :uint8 {
 	Strafing UMETA(DisplayName="ÖÜÐý"),
 	MeleeAttack UMETA(DisplayName="½üÕ½"),
 	MidAttack UMETA(DisplayName="ÖÐ¾àÀë¹¥»÷"),
-	RangerAttack UMETA(DisplayName="Ô¶³Ì¹¥»÷")
-
+	RangedAttack UMETA(DisplayName="Ô¶³Ì¹¥»÷"),
+	Retreating UMETA(DisplayName="ºóÍË")
 };
 
 
@@ -44,7 +44,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float ChaseRadius = 800.0f;  //×·»÷°ë¾¶Îª800
+	float ChaseRadius = 5500.0f;  //×·»÷°ë¾¶
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
 	float MaxHealth = 100;  //×î´óÑªÁ¿
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss")
@@ -52,27 +52,27 @@ public:
 
 	//ÖÐ¾àÀë¹¥»÷
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float MidAttackRadius = 500.0f;  //¹¥»÷¾àÀë
+	float MidAttackRadius = 2500.0f;  //¹¥»÷¾àÀë
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
 	float MidAttackDamage = 15.0f;  //¹¥»÷ÉËº¦
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float MidAttackInterval = 1.5f;  //¹¥»÷¼ä¸ô
+	float MidAttackInterval = 8.0f;  //¹¥»÷¼ä¸ô
 
 	//Ô¶³Ì¹¥»÷
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float RangedAttackRadius = 800.0f;  //¹¥»÷¾àÀë
+	float RangedAttackRadius = 5000.0f;  //¹¥»÷¾àÀë
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
 	float RangedAttackDamage = 25.0f;  //¹¥»÷ÉËº¦
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float RangedAttackInterval = 3.0f;  //¹¥»÷¼ä¸ô
+	float RangedAttackInterval = 15.0f;  //¹¥»÷¼ä¸ô
 
 	//½üÕ½¹¥»÷
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float MeleeAttackRadius = 200.0f;  //¹¥»÷¾àÀë
+	float MeleeAttackRadius = 1200.0f;  //¹¥»÷¾àÀë
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
 	float MeleeAttackDamage = 30.0f;  //¹¥»÷ÉËº¦
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss")
-	float MeleeAttackInterval = 1.0f;  //¹¥»÷¼ä¸ô
+	float MeleeAttackInterval = 3.0f;  //¹¥»÷¼ä¸ô
 	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss AI")
@@ -87,7 +87,8 @@ public:
 	float StrafeSpeed = 200.0f;  //ÖÜÐýËÙ¶È
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss AI")
 	float StrafeSwitchInterval = 2.0f;  //¶à¾Ã»»Ò»´ÎÈÆÈ¦·½Ïò
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boss AI")
+	float MinKeepDistance = 120.0f;  //Óë½ÇÉ«µÄ×îÐ¡¾àÀë
 
 
 	void MeleeAttack();  //½üÕ½¹¥»÷

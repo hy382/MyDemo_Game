@@ -74,7 +74,7 @@ public:
 
 	//血量
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	float MaxHealth = 100.0f;  //最大血量
+	float MaxHealth = 100000.0f;  //最大血量
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
 	float CurrentHealth;  //当前血量
 

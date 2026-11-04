@@ -41,35 +41,84 @@ void AMyBossCharacter::Tick(float DeltaTime)
 	Direction.Z = 0.0f;  //把Z轴清零防止boos飞起来
 	float Distance = Direction.Size();  //计算BOSS和玩家之间的距离
 
-	if(Distance<=MeleeRadius)
 
-	switch (CurrentState) {  //BOSS状态机
-	case EBossState::Idle:
-		//什么都不做
-		if (Distance <= ChaseRadius) { CurrentState = EBossState::Chasing; } //如果进入追击范围就切换到追击逻辑
-		break;
-	case EBossState::Chasing:
-		ChasePlayer(Direction);  //调用追击玩家的函数
-		if (Direction <= StrafeRadius) { CurrentState = EBossState::Strafing; }  
-		break;
-	case EBossState::Strafing:
-		//调用周旋的函数，还没写，后面再写
-		if (Direction <= MeleeRadius) { CurrentState = EBossState::Attacking; }
-		break;
+	if (MeleeAttackCooldownTimer > 0.0f) {  //近战攻击冷却倒计时
+		MeleeAttackCooldownTimer -= DeltaTime;
+	}
+	if (MidAttackCooldownTimer > 0.0f) {  //中距离攻击冷却倒计时
+		MidAttackCooldownTimer -= DeltaTime;
+	}
+	if (RangedAttackCooldownTimer > 0.0f) {  //远程攻击冷却倒计时
+		RangedAttackCooldownTimer -= DeltaTime;
+	}
 
+
+	//处理状态机逻辑执行的先后顺序
+	
+
+  if (Distance < MinKeepDistance) {CurrentState = EBossState::Retreating;}
+
+	else if (Distance <= MeleeAttackRadius) {
+
+		if (MeleeAttackCooldownTimer <= 0.0f) { CurrentState = EBossState::MeleeAttack; }
+
+		else { CurrentState = EBossState::Retreating; }
+	}
+
+	else if (Distance <= MidAttackRadius ) {
+
+		if(MidAttackCooldownTimer<=0.0f){ CurrentState = EBossState::MidAttack; }
+	
+		else { CurrentState = EBossState::Strafing; }
+	}
+
+	else if (Distance <= RangedAttackRadius ) {
+
+		if(RangedAttackCooldownTimer<=0.0f){ CurrentState = EBossState::RangedAttack; }
+		
+		else { CurrentState = EBossState::Chasing; }
+	}
+
+	
+	else if (Distance <= ChaseRadius) {
+		CurrentState = EBossState::Chasing;
+	}
+
+	else {
+		CurrentState = EBossState::Idle;
 	}
 	
 
-
-	if (AttackCooldownTimer > 0.0f) {  //冷却倒计时
-		AttackCooldownTimer -= DeltaTime;
+	switch (CurrentState) {  //BOSS状态机
+	case EBossState::Idle:  //什么都不做
+		break;
+	case EBossState::Retreating:  //后退
+		AddMovementInput(-Direction, 0.6f);
+		SetActorRotation(Direction.Rotation());
+	case EBossState::Chasing:
+		ChasePlayer(Direction);  //调用追击玩家的函数
+		break;
+	case EBossState::Strafing:
+		StrafeAroundPlayer(Direction, DeltaTime);  //调用周旋的函数
+		break;
+	case EBossState::MeleeAttack:
+		MeleeAttack();  //调用近战攻击的函数
+		MeleeAttackCooldownTimer = MeleeAttackInterval;  //攻击完立刻进入冷却
+		CurrentState = EBossState::Strafing;  //攻击完进入周旋状态
+		break;
+	case EBossState::MidAttack:
+		MidAttack();  //调用中距离攻击函数
+		MidAttackCooldownTimer = MidAttackInterval;
+		CurrentState = EBossState::Strafing;
+		break;
+	case EBossState::RangedAttack:
+		RangedAttack();
+		RangedAttackCooldownTimer = RangedAttackInterval;
+		CurrentState = EBossState::Strafing;
+		break;
 	}
-
-	if (Distance <= AttackRadius && AttackCooldownTimer <= 0.0f) {
-		SetActorRotation(Direction.Rotation());  //让BOSS面向玩家
-		Attack();  //调用攻击函数
-		AttackCooldownTimer = AttackInterval;  //攻击完立刻进入冷却
-	}
+	
+	
 }
 
 // Called to bind functionality to input
@@ -115,7 +164,7 @@ void AMyBossCharacter::MidAttack()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);  //忽略自己
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Pawn, QueryParams);  //发射射线
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 10.0f, 0, 10.0f);
+	DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 10.0f, 0, 10.0f);
 	if (bHit) {
 		AActor* HitActor = HitResult.GetActor();  //获取被攻击的角色
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT(" %s"), *HitActor->GetName()));
@@ -177,8 +226,8 @@ void AMyBossCharacter::StrafeAroundPlayer(FVector Direction, float DeltaTime)
 
 		float SpeedRation = StrafeSpeed / GetCharacterMovement()->MaxWalkSpeed;  //计算标量
 
-		AddMovementInput(StrafeVec, StrafeDirection * SpeedRation);  //向量乘以标量
-	
+		AddMovementInput(StrafeVec, StrafeDirection * SpeedRation);  //左右移动
+		AddMovementInput(Direction, 0.5f);  //往前移动
 }
 
 
